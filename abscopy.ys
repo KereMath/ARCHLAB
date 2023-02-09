@@ -1,0 +1,152 @@
+# name = Kerem Recep Gür
+# ID = 2448462
+#/* $begin abscopy-ys */
+##################################################################
+# abscopy.ys - copy the absolute values of a src block of n words to dst.
+# Return the sum of copied (absolute) values.
+
+# Include your name and ID here.
+# Describe how and why you modified the baseline code.
+# Firstly the code was doing copying and adding one by one. The array was grouped by 8 for my
+# algorithm, copies and adds and subtracts in groups of 8. Afterwards i used my implemented isubq
+# instruction to take the absolute value of a number. So it decreased the number of instructions.
+# Moreover my another goal was to decrease the number of JUMP instructions to make it faster.
+##################################################################
+# Do not modify this portion
+# Function prologue.
+# %rdi = src, %rsi = dst, %rdx = n
+abscopy:
+##################################################################
+# You can modify this portion
+        # Loop header
+        xorq %rax,%rax          # sum = 0;
+        andq %rdx,%rdx          # n <= 0?
+        jle Done
+        irmovq $1, %r8
+        irmovq $8, %r11
+        irmovq $64, %r12
+        rrmovq %rdx, %r13
+        subq %r11 ,%r13
+        andq %r13, %r13          # n > 8?
+        jl Loop     
+Loop2:   
+        mrmovq (%rdi), %r10     # read val from src...
+        andq %r10, %r10         # val >= 0?
+        jle negative1           # if so, skip negating
+         addq %r10, %rax         # sum += absval   
+        rmmovq %r10, (%rsi)     # ...and store it to dst     
+test:
+	mrmovq 8(%rdi), %r10     # read val from src...
+        andq %r10, %r10         # val >= 0?
+        jle negative2           # if so, skip negating
+        addq %r10, %rax         # sum += absval   
+        rmmovq %r10, 8(%rsi)     # ...and store it to dst       	
+test2:	
+	mrmovq 16(%rdi), %r10     # read val from src...
+        andq %r10, %r10         # val >= 0?
+        jle negative3           # if so, skip negating
+        addq %r10, %rax         # sum += absval   
+        rmmovq %r10, 16(%rsi) 
+test3:
+	mrmovq 24(%rdi), %r10     # read val from src...
+        andq %r10, %r10         # val >= 0?
+        jle negative4           # if so, skip negating
+        addq %r10, %rax         # sum += absval   
+        rmmovq %r10, 24(%rsi) 
+          
+test4:
+	mrmovq 32(%rdi), %r10     # read val from src...
+        andq %r10, %r10         # val >= 0?
+        jle negative5           # if so, skip negating
+        addq %r10, %rax         # sum += absval   
+        rmmovq %r10, 32(%rsi)    
+test5:
+	mrmovq 40(%rdi), %r10     # read val from src...
+        andq %r10, %r10         # val >= 0?
+        jle negative6           # if so, skip negating
+        addq %r10, %rax         # sum += absval   
+        rmmovq %r10, 40(%rsi)          
+test6:
+	mrmovq 48(%rdi), %r10     # read val from src...
+        andq %r10, %r10         # val >= 0?
+        jle negative7           # if so, skip negating
+        addq %r10, %rax         # sum += absval   
+        rmmovq %r10, 48(%rsi)  
+test7:
+	mrmovq 56(%rdi), %r10     # read val from src...
+        andq %r10, %r10         # val >= 0?
+        jle negative8           # if so, skip negating
+        addq %r10, %rax         # sum += absval   
+        rmmovq %r10, 56(%rsi) 
+        jmp Positive                     
+negative1:
+	isubq $0,%r10
+	 addq %r10, %rax         # sum += absval   
+        rmmovq %r10, (%rsi)     # ...and store it to dst        
+        jmp test
+negative2:
+	isubq $0,%r10
+	 addq %r10, %rax         # sum += absval   
+        rmmovq %r10, 8(%rsi)     # ...and store it to dst
+	jmp test2
+negative3:
+	isubq $0,%r10
+	addq %r10, %rax         # sum += absval   
+        rmmovq %r10, 16(%rsi) 
+    	jmp test3
+negative4:
+	isubq $0,%r10
+	addq %r10, %rax         # sum += absval   
+        rmmovq %r10, 24(%rsi) 
+    	jmp test4
+negative5:    	
+    	isubq $0,%r10
+    	addq %r10, %rax         # sum += absval   
+        rmmovq %r10, 32(%rsi) 
+    	jmp test5
+negative6:
+	isubq $0,%r10
+    	addq %r10, %rax         # sum += absval   
+        rmmovq %r10, 40(%rsi) 
+    	jmp test6
+negative7:
+	isubq $0,%r10
+    	addq %r10, %rax         # sum += absval   
+        rmmovq %r10, 48(%rsi) 
+        jmp test7
+negative8:
+	isubq $0,%r10
+    	addq %r10, %rax          
+        rmmovq %r10, 56(%rsi)  	    	
+Positive:       
+        subq %r11, %rdx         # n--
+        addq %r12, %rsi         # dst++
+        addq %r12, %rdi         # src++
+        rrmovq %rdx, %r13
+        subq %r11 ,%r13
+        andq %r13, %r13          # n > 8?
+        jge Loop2                 # if so, goto Loop:
+        andq %rdx, %rdx
+        je Done
+Loop:
+        mrmovq (%rdi), %r10     # read val from src...
+        andq %r10, %r10         # val >= 0?
+        jge Positive1            # if so, skip negating
+        isubq $0, %r10  
+Positive1:
+        addq %r10, %rax         # sum += absval   
+        rmmovq %r10, (%rsi)     # ...and store it to dst
+        subq %r8, %rdx         # n--
+        addq %r11, %rsi         # dst++
+        addq %r11, %rdi         # src++
+        andq %rdx,%rdx          # n > 0?
+        jg Loop                 # if so, goto Loop:       
+##################################################################
+# Do not modify the following section of code
+# Function epilogue.
+Done:
+        ret
+##################################################################
+# Keep the following label at the end of your function
+End:
+#/* $end abscopy-ys */
